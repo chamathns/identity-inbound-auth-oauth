@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.oauth2.responsemode.provider;
 
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
+
 /**
  * Interface class for all response mode provider classes
  */
@@ -44,7 +46,7 @@ public interface ResponseModeProvider {
      * @param authorizationResponseDTO AuthorizationResponseDTO instance
      * @return true if relevant ResponseModeProvider can handle the given response_mode
      */
-    boolean canHandle(AuthorizationResponseDTO authorizationResponseDTO);
+    boolean canHandle(AuthorizationResponseDTO authorizationResponseDTO) throws IdentityOAuth2ClientException;
 
     /**
      * Use this method only when AuthResponseType is set to REDIRECTION

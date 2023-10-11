@@ -23,7 +23,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
+import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.responsemode.provider.AuthorizationResponseDTO;
 import org.wso2.carbon.identity.oauth2.responsemode.provider.ResponseModeProvider;
@@ -49,13 +51,21 @@ public class QueryJwtResponseModeProvider extends JarmResponseModeProvider {
     }
 
     @Override
-    public boolean canHandle(AuthorizationResponseDTO authorizationResponseDTO) {
+    public boolean canHandle(AuthorizationResponseDTO authorizationResponseDTO) throws IdentityOAuth2ClientException {
 
         // This ResponseModeProvider cannot handle response types that contain "token" or "ide_token".
         String responseType = authorizationResponseDTO.getResponseType();
 
-        return !hasIDTokenOrTokenInResponseType(responseType) &&
-                getResponseMode().equals(authorizationResponseDTO.getResponseMode());
+
+        if (hasIDTokenOrTokenInResponseType(responseType) &&
+                getResponseMode().equals(authorizationResponseDTO.getResponseMode())) {
+
+            throw new IdentityOAuth2ClientException(OAuth2ErrorCodes.INVALID_REQUEST,
+                    String.format("Cannot handle response type: %s with response mode: %s", responseType,
+                    authorizationResponseDTO.getResponseMode()));
+        }
+
+        return getResponseMode().equals(authorizationResponseDTO.getResponseMode());
     }
 
     @Override

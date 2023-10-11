@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.oauth2.responsemode.provider;
 
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 
 /**
  * Abstract class for response mode provider classes
@@ -44,7 +45,7 @@ public abstract class AbstractResponseModeProvider implements ResponseModeProvid
      * @return true if response mode can be handled
      */
     @Override
-    public boolean canHandle(AuthorizationResponseDTO authorizationResponseDTO) {
+    public boolean canHandle(AuthorizationResponseDTO authorizationResponseDTO) throws IdentityOAuth2ClientException {
 
         return getResponseMode().equals(authorizationResponseDTO.getResponseMode());
     }

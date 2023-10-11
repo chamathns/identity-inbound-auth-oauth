@@ -548,7 +548,8 @@ public class OAuth2AuthzEndpoint {
      * @param authorizationResponseDTO AuthorizationResponseDTO instance
      * @return ResponseModeProvider
      */
-    private ResponseModeProvider getResponseModeProvider(AuthorizationResponseDTO authorizationResponseDTO) {
+    private ResponseModeProvider getResponseModeProvider(AuthorizationResponseDTO authorizationResponseDTO)
+            throws IdentityOAuth2ClientException {
 
         Map<String, ResponseModeProvider> responseModeProviders =
                 OAuth2ServiceComponentHolder.getResponseModeProviders();
@@ -625,7 +626,12 @@ public class OAuth2AuthzEndpoint {
 
         OAuth2Parameters oauth2Params = getOauth2Params(oAuthMessage);
         AuthorizationResponseDTO authorizationResponseDTO = getAuthResponseDTO(oauth2Params);
-        ResponseModeProvider responseModeProvider = getResponseModeProvider(authorizationResponseDTO);
+        ResponseModeProvider responseModeProvider = null;
+        try {
+            responseModeProvider = getResponseModeProvider(authorizationResponseDTO);
+        } catch (IdentityOAuth2ClientException e) {
+            return handleClientException(e);
+        }
         authorizationResponseDTO.setFormPostRedirectPage(formPostRedirectPage);
 
         if (consent != null) {
@@ -681,6 +687,21 @@ public class OAuth2AuthzEndpoint {
         }
         return Response.status(authorizationResponseDTO.getResponseCode())
                 .location(new URI(responseModeProvider.getAuthResponseRedirectUrl(authorizationResponseDTO))).build();
+    }
+
+    private Response handleClientException(IdentityOAuth2ClientException e) {
+
+        String errorCode = e.getErrorCode();
+        JSONObject errorResponse = new JSONObject();
+        errorResponse.put(OAuthConstants.OAUTH_ERROR, errorCode);
+        errorResponse.put(OAuthConstants.OAUTH_ERROR_DESCRIPTION, e.getMessage());
+        Response.ResponseBuilder respBuilder;
+        if (errorCode.equals(OAuth2ErrorCodes.INVALID_REQUEST)) {
+            respBuilder = Response.status(HttpServletResponse.SC_BAD_REQUEST);
+        } else {
+            respBuilder = Response.status(HttpServletResponse.SC_UNAUTHORIZED);
+        }
+        return respBuilder.entity(errorResponse.toString()).build();
     }
 
     private boolean isConsentHandlingFromFrameworkSkipped(OAuth2Parameters oAuth2Parameters)
@@ -1068,7 +1089,12 @@ public class OAuth2AuthzEndpoint {
         String sessionDataKeyFromLogin = getSessionDataKeyFromLogin(oAuthMessage);
         AuthenticationResult authnResult = getAuthenticationResult(oAuthMessage, sessionDataKeyFromLogin);
         AuthorizationResponseDTO authorizationResponseDTO = getAuthResponseDTO(oauth2Params);
-        ResponseModeProvider responseModeProvider = getResponseModeProvider(authorizationResponseDTO);
+        ResponseModeProvider responseModeProvider = null;
+        try {
+            responseModeProvider = getResponseModeProvider(authorizationResponseDTO);
+        } catch (IdentityOAuth2ClientException e) {
+            return handleClientException(e);
+        }
         authorizationResponseDTO.setFormPostRedirectPage(formPostRedirectPage);
 
         if (isAuthnResultFound(authnResult)) {
